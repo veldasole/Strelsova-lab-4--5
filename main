@@ -1,0 +1,144 @@
+import codecs
+import math
+import matplotlib
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+
+file = codecs.open("test.txt", encoding='utf-8')
+txt = file.read()
+list2 = txt.split()
+list1= [int(list2[i]) for i in range(len(list2))]
+print(list1)
+#Выборочная средняя
+S=0
+for i in range(len(list2)):
+    S+= int(list2[i])
+avgX = S/len(list2)
+print("Выборочная средняя =", avgX)
+
+#Оценка дисперсии
+SD=0
+for i in range(len(list2)):
+    KR = (int(list2[i]) - avgX)**2
+    SD += KR
+OD = (math.sqrt(SD / (len(list2) - 1)))**2
+Disp = math.sqrt(SD / (len(list2) - 1))
+print("Оценка дисперсии =", OD)
+print("Дисперсии =", Disp)
+#Построение эмпирического закона случайной величины
+minX = min(list1)
+maxX = max(list1)
+R = maxX- minX
+
+#Формула Стерджесса
+DX = R/(1+3.22 * math.log(len(list2)))
+cordX = []
+k = 0
+while minX + k * DX < maxX:
+    cordX.append(float('{:.3f}'.format(minX + k * DX)))
+    k+=1
+cordX.append(maxX)
+print(cordX)
+
+empM = dict.fromkeys([str(cordX[i])  + " - " + str(cordX[i + 1]) for i in range(len(cordX) - 1)])
+for i in range(len(cordX) - 1):
+    count = 0
+    for p in list1:
+        if p >= cordX[i] and p <= cordX[i+1]:
+            count += 1
+    empM[str(cordX[i]) + " - " + str(cordX[i + 1])] = count
+print("Число значений случайной величины попавших в интервалы")
+
+print(empM)
+for i in range(len(cordX) - 1):
+    empM[str(cordX[i]) + " - " + str(cordX[i + 1])] = float('{:.3f}'.format(empM[str(cordX[i]) + " - "
+        + str(cordX[i + 1])] / len(list2)))
+print("Эмпирические частоты каждого интервала: ")
+print(empM)
+
+empM2 = list(empM.values())
+print("Эмпирические частоты: ")
+print(empM2)
+
+#Функция распределения
+F = list()
+F.append(0)
+for i in range(len(empM2)):
+    F.append(float('{:.3f}'.format(F[i] + empM2[i])))
+print("Значения функции распределения: ")
+print(F)
+
+print("\n\nЛабораторная работа 2:")
+#Коэффициент асимметрии А
+ST = 0  
+for i in range(len(list1)):
+    PR = (list1[i] - avgX) ** 3;
+    ST += PR
+print("Сумма разностей кубов: ", ST)
+print("Коэффициент ассиметрии А:")
+A = ST / ((len(list2) - 1)*(avgX**3))
+print(float('{:.3f}'.format(A)))
+
+#эксцесс Е 
+SQ = 0  
+for i in range(len(list2)):
+    PR = (list1[i] - avgX) ** 4;
+    SQ += PR
+print("Сумма разностей четвертой степени: ", SQ)
+print("Эксцесс Е:")
+E = (SQ / ((len(list2) - 1)*(avgX**4))) - 3
+print(float('{:.3f}'.format(E)))
+
+print("\n\nЛабораторная работа 3:")
+
+print("Выборочная средняя =", avgX)
+print("Дисперсии =", Disp)
+TCH = dict.fromkeys([str(cordX[i])  + " - " + str(cordX[i + 1]) for i in range(len(cordX) - 1)])
+for i in range(len(cordX) - 1):
+    a = norm.cdf((cordX[i] - avgX)/Disp) - 0.5
+    b = norm.cdf((cordX[i+1] - avgX)/Disp) - 0.5
+    TCH[str(cordX[i]) + " - " + str(cordX[i + 1])] = float('{:.4f}'.format(b - a))
+print("Вероятности попадания случайной величины(теоритические частоты):")
+print(TCH)
+TCH2 =list(TCH.values())
+
+print("\n\nЛабораторная работа 4:")
+
+#создания таблицы критической точки распределения
+YrovZ = [6.6, 9.2, 11.3, 13.3, 15.1, 16.8, 18.5, 20.1, 21.7, 23.2, 24.7, 26.2, 27.7, 29.1, 30.6, 32.0, 33.4, 34.8, 36.2, 37.6, 38.9, 40.3, 41.6, 43.0, 44.3, 45.6, 47.0, 48.3, 49.6, 50.9]
+tableKritTR = dict.fromkeys([str(i+1) + " - " +"0.01" for i in range(30)])
+for i in range(30):
+  tableKritTR[str(i+1) + " - " +"0.01"] = float(YrovZ[i])
+
+sumkritPirsona = 0
+print("Эмпирические частоты: ")
+print(empM2)
+print("Теоритические частоты")
+print(TCH2)
+for i in range(len(empM2)):
+  kritPirsona = ((empM2[i] - float(TCH2[i]))**2)/float(TCH2[i])
+  sumkritPirsona += kritPirsona
+kP = math.sqrt(sumkritPirsona)
+print("критерий Пирсона") 
+print(kP)
+
+k = len(empM2) - 1
+a = 0.01
+if kP >  tableKritTR[str(k) +" - " + str(a)]:
+  print("Результат: Гипотиза отвергнута")
+else:
+  print("Результат: Гипотиза принята")
+
+  
+
+fig = plt.figure()
+ax = fig.add_subplot(211)
+ax.set_title('Эмпирический ряд распределения')
+ax.bar(empM.keys(), empM.values())
+gr = fig.add_subplot(212)
+gr.set_title('График функции распределения')
+gr.plot(cordX, F)
+fig.set_figwidth(12)  # ширина Figure
+fig.set_figheight(12)  # высота Figure
+plt.show()
